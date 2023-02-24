@@ -39,6 +39,18 @@ app.get("/", async (req, res) => {
   res.send({ message: "server is running" });
 });
 
+app.post("/insertusertodb", async (req, res) => {
+  try {
+    const userInfo = req.body;
+    console.log(userInfo);
+    const result = await users.insertOne(userInfo);
+    res.send(result);
+  } catch {
+    (error) => {
+      console.log(error);
+    };
+  }
+});
 app.listen(port, () => {
   console.log("listening on port", port);
 });
