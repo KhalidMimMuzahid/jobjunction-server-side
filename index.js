@@ -161,6 +161,27 @@ app.post("/insertusertodb", async (req, res) => {
     };
   }
 });
+app.post("/searchjob", async (req, res) => {
+  try {
+    const query = {};
+    const info = req.body;
+    console.log("hitted");
+    console.log(info);
+    // const option = await jobPostsCollection.find(query).toArray();
+    // res.send({
+    //   success: true,
+    //   message: "Successfully got the data",
+    //   data: option,
+    // });
+    res.send(info);
+  } catch (error) {
+    console.log(error.name.bgRed, error.message.bold);
+    // res.send({
+    //   success: false,
+    //   error: error.message,
+    // });
+  }
+});
 
 app.listen(port, () => {
   console.log("listening on port", port);
