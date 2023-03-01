@@ -228,3 +228,20 @@ app.get("/search", async (req, res) => {
     // });
   }
 });
+
+// search people get api
+app.get("/searchpeople", async (req, res) => {
+  try {
+    const _id = req.query._id;
+    // const email = req.headers.email
+    const query = { _id: new ObjectId(_id) };
+    const data = await users.find(query).toArray();
+    res.send(data);
+  } catch (error) {
+    console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
