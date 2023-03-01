@@ -12,15 +12,26 @@ const password = process.env.DB_PASSWORD;
 const uri = `mongodb+srv://${user}:${password}@cluster0.5e5ivqa.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri);
-// https://github.com/mdismail645221/ShopEase-assessment-sever/blob/main/index.js
-
-
+const server = app.listen(port, () => {
+  console.log("listening on port", port);
+});
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+io.on("connection", (socket) => {
+  console.log("connected to socket.io");
+});
 
 // collection
-const usersAdditionalInfo = client.db("UsersInfo").collection("usersAdditionalInfo");
+const usersAdditionalInfo = client
+  .db("UsersInfo")
+  .collection("usersAdditionalInfo");
 const users = client.db("UsersInfo").collection("users");
 const timeLinePostsCollection = client.db("posts").collection("timeLinePosts");
-const jobPostsCollection = client.db("alljobposts").collection("jobPosts");
+const jobPostsCollection = client.db("posts").collection("jobPosts");
 
 const run = async () => {
   try {
@@ -189,21 +200,20 @@ app.get("/search", async (req, res) => {
   try {
     const info = req.headers.data;
     const query = {};
-    const parsedInfo = JSON.parse(info)
+    const parsedInfo = JSON.parse(info);
     // console.log(parsedInfo.searchType);
 
-    if (parsedInfo.searchType == "Jobs"){
+    if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
-      console.log(result)
+      console.log("result", result);
       res.send({
         success: true,
         message: "Successfully got the data",
         data: result,
       });
-    }
-    else{
+    } else {
       const result = await users.find(query).toArray();
-      console.log(result)
+      console.log(result);
       res.send({
         success: true,
         message: "Successfully got the data",
@@ -217,8 +227,4 @@ app.get("/search", async (req, res) => {
     //   error: error.message,
     // });
   }
-});
-
-app.listen(port, () => {
-  console.log("listening on port", port);
 });
