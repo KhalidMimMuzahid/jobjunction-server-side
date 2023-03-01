@@ -238,8 +238,8 @@ app.get("/searchpeople", async (req, res) => {
   try {
     const _id = req.query._id;
     // const email = req.headers.email
-    const query = { _id: new ObjectId(id) }
-    const data = await users.find(query).toArray()
+    const query = { _id: new ObjectId(_id) }
+    const data = await users.findOne(query)
     res.send(data)
   } 
   catch (error) {
