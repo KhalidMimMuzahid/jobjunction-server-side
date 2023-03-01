@@ -153,18 +153,7 @@ app.get("/getalljobs", async (req, res) => {
         success: true,
         message: "Successfully got the data",
         data: option,
-<<<<<<< HEAD
     })
-=======
-      });
-    } else {
-      // console.log(error.name.bgRed, error.message.bold);
-      res.send({
-        success: false,
-        error: error.message,
-      });
-    }
->>>>>>> 52dcba98edec2c31c78b3ed91f41b63c8107c2ee
   } catch (error) {
     // catch block
     // console.log(error.name.bgRed, error.message.bold);
@@ -237,17 +226,10 @@ app.get("/search", async (req, res) => {
     }
   } catch (error) {
     // console.log(error.name.bgRed, error.message.bold);
-<<<<<<< HEAD
-    res.send({
-      success: false,
-      error: error.message,
-    });
-=======
     // res.send({
     //   success: false,
     //   error: error.message,
     // });
->>>>>>> 52dcba98edec2c31c78b3ed91f41b63c8107c2ee
   }
 });
 
