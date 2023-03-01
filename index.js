@@ -13,12 +13,12 @@ const uri = `mongodb+srv://${user}:${password}@cluster0.5e5ivqa.mongodb.net/?ret
 // console.log(uri);
 const client = new MongoClient(uri);
 // https://github.com/mdismail645221/ShopEase-assessment-sever/blob/main/index.js
-const users = client.db("UsersInfo").collection("users");
+
+
 
 // collection
-const usersAdditionalInfo = client
-  .db("UsersInfo")
-  .collection("usersAdditionalInfo");
+const usersAdditionalInfo = client.db("UsersInfo").collection("usersAdditionalInfo");
+const users = client.db("UsersInfo").collection("users");
 const timeLinePostsCollection = client.db("posts").collection("timeLinePosts");
 const jobPostsCollection = client.db("alljobposts").collection("jobPosts");
 
@@ -185,18 +185,31 @@ app.post("/insertusertodb", async (req, res) => {
 // })
 
 // find a job by filter
-app.get("/searchjob", async (req, res) => {
+app.get("/search", async (req, res) => {
   try {
     const info = req.headers.data;
     const query = {};
-    console.log(JSON.parse(info));
-    // const option = await jobPostsCollection.find(query).toArray();
-    // res.send({
-    //   success: true,
-    //   message: "Successfully got the data",
-    //   data: option,
-    // });
-    res.send(info);
+    const parsedInfo = JSON.parse(info)
+    // console.log(parsedInfo.searchType);
+
+    if (parsedInfo.searchType == "Jobs"){
+      const result = await jobPostsCollection.find(query).toArray();
+      console.log(result)
+      res.send({
+        success: true,
+        message: "Successfully got the data",
+        data: result,
+      });
+    }
+    else{
+      const result = await users.find(query).toArray();
+      console.log(result)
+      res.send({
+        success: true,
+        message: "Successfully got the data",
+        data: result,
+      });
+    }
   } catch (error) {
     console.log(error.name.bgRed, error.message.bold);
     // res.send({
