@@ -220,6 +220,25 @@ app.get("/search", async (req, res) => {
   }
 });
 
+// search people get api
+app.get('/searchpeople', async (req, res) => {
+  try {
+    const id = req.query.id
+    // const email = req.headers.email
+    const query = { _id: new ObjectId(id) }
+    const data = await users.find(query).toArray()
+    res.send(data)
+  } 
+  catch (error) {
+    console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
+
 app.listen(port, () => {
   console.log("listening on port", port);
 });
