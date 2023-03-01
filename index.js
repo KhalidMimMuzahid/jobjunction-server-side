@@ -12,6 +12,8 @@ const password = process.env.DB_PASSWORD;
 const uri = `mongodb+srv://${user}:${password}@cluster0.5e5ivqa.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri);
+
+//  socket io start here
 const server = app.listen(port, () => {
   console.log("listening on port", port);
 });
@@ -23,8 +25,18 @@ const io = require("socket.io")(server, {
 });
 io.on("connection", (socket) => {
   console.log("connected to socket.io");
+  socket.on("setup", (userData) => {
+    // console.log("data: ", userData);
+    socket.join(userData?.email);
+    // console.log("try", userData?.email);
+    socket.emit("connected");
+  });
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("user joined room: ", room);
+  });
 });
-
+//  socket io end here
 // collection
 const usersAdditionalInfo = client
   .db("UsersInfo")
@@ -201,11 +213,11 @@ app.get("/search", async (req, res) => {
     const info = req.headers.data;
     const query = {};
     const parsedInfo = JSON.parse(info);
-    // console.log(parsedInfo.searchType);
+    console.log(parsedInfo);
 
     if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
-      console.log("result", result);
+      // console.log("result", result);
       res.send({
         success: true,
         message: "Successfully got the data",
@@ -235,10 +247,32 @@ app.get("/searchpeople", async (req, res) => {
     const _id = req.query._id;
     // const email = req.headers.email
     const query = { _id: new ObjectId(_id) };
-    const data = await users.find(query).toArray();
+    const data = await users.findOne(query);
     res.send(data);
   } catch (error) {
     console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// add connection API PUT
+app.put("/addconnecion", async (req, res) => {
+  try {
+    const connectionInfo = req.body;
+    const { senderaInfo, receiverEmail } = connectionInfo;
+    console.log(connectionInfo);
+
+    const result = await users.updateOne(
+      { email: receiverEmail },
+      { $push: { pendingReq: senderaInfo } }
+    );
+    // console.log(result);
+    res.send(result);
+  } catch (error) {
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
