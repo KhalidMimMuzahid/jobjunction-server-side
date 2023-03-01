@@ -163,27 +163,26 @@ app.post("/insertusertodb", async (req, res) => {
   }
 });
 
-
 // liking api
-app.get('/like', async (req, res) => {
-  try {
-    const id = req.query.id
-    // const email = req.headers.email
-    const query = { _id: new ObjectId(id) }
-    const data = await timeLinePostsCollection.find(query).toArray()
-    // const result = data[0].allLikes
-    // console.log(result)
-    // console.log(data)
-    res.send(data)
+// app.get('/like', async (req, res) => {
+//   try {
+//     const id = req.query.id
+//     // const email = req.headers.email
+//     const query = { _id: new ObjectId(id) }
+//     const data = await timeLinePostsCollection.find(query).toArray()
+//     // const result = data[0].allLikes
+//     // console.log(result)
+//     // console.log(data)
+//     res.send(data)
 
-  } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-})
+//   } catch (error) {
+//     console.log(error.name.bgRed, error.message.bold);
+//     res.send({
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// })
 
 // find a job by filter
 app.get("/searchjob", async (req, res) => {
