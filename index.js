@@ -134,7 +134,7 @@ app.post("/postajob", async (req, res) => {
       });
     }
   } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
@@ -149,22 +149,14 @@ app.get("/getalljobs", async (req, res) => {
     const query = {};
     const option = await jobPostsCollection.find(query).toArray();
 
-    if (option.acknowledged) {
       res.send({
         success: true,
         message: "Successfully got the data",
         data: option,
-      });
-    } else {
-      console.log(error.name.bgRed, error.message.bold);
-      res.send({
-        success: false,
-        error: error.message,
-      });
-    }
+    })
   } catch (error) {
     // catch block
-    console.log(error.name.bgRed, error.message.bold);
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
@@ -233,11 +225,11 @@ app.get("/search", async (req, res) => {
       });
     }
   } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
-    // res.send({
-    //   success: false,
-    //   error: error.message,
-    // });
+    // console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
