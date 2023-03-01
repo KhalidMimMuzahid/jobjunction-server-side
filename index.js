@@ -12,15 +12,38 @@ const password = process.env.DB_PASSWORD;
 const uri = `mongodb+srv://${user}:${password}@cluster0.5e5ivqa.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri);
-// https://github.com/mdismail645221/ShopEase-assessment-sever/blob/main/index.js
 
-
-
+//  socket io start here
+const server = app.listen(port, () => {
+  console.log("listening on port", port);
+});
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+io.on("connection", (socket) => {
+  console.log("connected to socket.io");
+  socket.on("setup", (userData) => {
+    // console.log("data: ", userData);
+    socket.join(userData?.email);
+    // console.log("try", userData?.email);
+    socket.emit("connected");
+  });
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("user joined room: ", room);
+  });
+});
+//  socket io end here
 // collection
-const usersAdditionalInfo = client.db("UsersInfo").collection("usersAdditionalInfo");
+const usersAdditionalInfo = client
+  .db("UsersInfo")
+  .collection("usersAdditionalInfo");
 const users = client.db("UsersInfo").collection("users");
 const timeLinePostsCollection = client.db("posts").collection("timeLinePosts");
-const jobPostsCollection = client.db("alljobposts").collection("jobPosts");
+const jobPostsCollection = client.db("posts").collection("jobPosts");
 
 const run = async () => {
   try {
@@ -163,48 +186,46 @@ app.post("/insertusertodb", async (req, res) => {
   }
 });
 
-
 // liking api
-app.get('/like', async (req, res) => {
-  try {
-    const id = req.query.id
-    // const email = req.headers.email
-    const query = { _id: new ObjectId(id) }
-    const data = await timeLinePostsCollection.findOne(query)
-    // const result = data[0].allLikes
-    // console.log(result)
-    // console.log(data)
-    res.send(data)
+// app.get('/like', async (req, res) => {
+//   try {
+//     const id = req.query.id
+//     // const email = req.headers.email
+//     const query = { _id: new ObjectId(id) }
+//     const data = await timeLinePostsCollection.find(query).toArray()
+//     // const result = data[0].allLikes
+//     // console.log(result)
+//     // console.log(data)
+//     res.send(data)
 
-  } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-})
+//   } catch (error) {
+//     console.log(error.name.bgRed, error.message.bold);
+//     res.send({
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// })
 
 // find a job by filter
 app.get("/search", async (req, res) => {
   try {
     const info = req.headers.data;
     const query = {};
-    const parsedInfo = JSON.parse(info)
-    // console.log(parsedInfo.searchType);
+    const parsedInfo = JSON.parse(info);
+    console.log(parsedInfo);
 
-    if (parsedInfo.searchType == "Jobs"){
+    if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
-      console.log(result)
+      // console.log("result", result);
       res.send({
         success: true,
         message: "Successfully got the data",
         data: result,
       });
-    }
-    else{
+    } else {
       const result = await users.find(query).toArray();
-      console.log(result)
+      console.log(result);
       res.send({
         success: true,
         message: "Successfully got the data",
@@ -221,12 +242,12 @@ app.get("/search", async (req, res) => {
 });
 
 // search people get api
-app.get('/searchpeople', async (req, res) => {
+app.get("/searchpeople", async (req, res) => {
   try {
-    const id = req.query.id
+    const _id = req.query._id;
     // const email = req.headers.email
     const query = { _id: new ObjectId(id) }
-    const data = await users.findOne(query)
+    const data = await users.find(query).toArray()
     res.send(data)
   } 
   catch (error) {
@@ -238,44 +259,24 @@ app.get('/searchpeople', async (req, res) => {
   }
 })
 
-
-// all friends API 
-app.get('/allfriends', async (req, res) => {
-  try {
-    const id = req.query.id
-    // const email = req.headers.email
-    const query = { _id: new ObjectId(id) }
-    const data = await users.findOne(query)
-    
-    console.log(data.allFriends)
-    res.send(data)
-
-  } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-})
-
-
 // add connection API PUT
-app.put('/addconnection', async(req, res) => {
+app.put("/addconnecion", async (req, res) => {
   try {
-    const data = req.body
+    const connectionInfo = req.body;
+    const { senderaInfo, receiverEmail } = connectionInfo;
+    console.log(connectionInfo);
 
-    res.send(data)
+    const result = await users.updateOne(
+      { email: receiverEmail },
+      { $push: { pendingReq: senderaInfo } }
+    );
+    // console.log(result);
+    res.send(result);
   } catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
     });
   }
-})
-
-
-app.listen(port, () => {
-  console.log("listening on port", port);
 });
