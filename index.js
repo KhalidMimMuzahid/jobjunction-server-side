@@ -107,7 +107,7 @@ app.get("/allposts", async (req, res) => {
     });
   } catch (error) {
     // catch block
-    console.log(error.name.bgRed, error.message.bold);
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
@@ -153,7 +153,18 @@ app.get("/getalljobs", async (req, res) => {
         success: true,
         message: "Successfully got the data",
         data: option,
+<<<<<<< HEAD
     })
+=======
+      });
+    } else {
+      // console.log(error.name.bgRed, error.message.bold);
+      res.send({
+        success: false,
+        error: error.message,
+      });
+    }
+>>>>>>> 52dcba98edec2c31c78b3ed91f41b63c8107c2ee
   } catch (error) {
     // catch block
     // console.log(error.name.bgRed, error.message.bold);
@@ -226,10 +237,17 @@ app.get("/search", async (req, res) => {
     }
   } catch (error) {
     // console.log(error.name.bgRed, error.message.bold);
+<<<<<<< HEAD
     res.send({
       success: false,
       error: error.message,
     });
+=======
+    // res.send({
+    //   success: false,
+    //   error: error.message,
+    // });
+>>>>>>> 52dcba98edec2c31c78b3ed91f41b63c8107c2ee
   }
 });
 
@@ -238,12 +256,26 @@ app.get("/searchpeople", async (req, res) => {
   try {
     const _id = req.query._id;
     // const email = req.headers.email
-    const query = { _id: new ObjectId(_id) }
-    const data = await users.findOne(query)
-    res.send(data)
-  } 
-  catch (error) {
-    console.log(error.name.bgRed, error.message.bold);
+    const query = { _id: new ObjectId(_id) };
+    const data = await users.findOne(query);
+    res.send(data);
+  } catch (error) {
+    // console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.get("/myprofile", async (req, res) => {
+  try {
+    const uid = req.query.uid;
+    // const email = req.headers.email
+    const query = { uid };
+    const data = await users.findOne(query);
+    res.send(data);
+  } catch (error) {
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
@@ -269,6 +301,49 @@ app.put("/addconnecion", async (req, res) => {
     res.send({
       success: false,
       error: error.message,
+    });
+  }
+});
+// cancel connection  put api
+app.put("/caancelconnection", async (req, res) => {
+  const infoString = req.headers.info;
+  const info = JSON.parse(infoString);
+  const { recieverEmail, senderEmail } = info;
+  // console.log("cancel con info: ", info);
+  const result = await users.updateOne(
+    { email: recieverEmail },
+    { $pull: { pendingReq: { senderEmail: senderEmail } } }
+  );
+  res.send(result);
+});
+// when user cancel the network connectuion
+app.put("/acceptconnection", async (req, res) => {
+  const infoString = req.headers.info;
+  const info = JSON.parse(infoString);
+  const { recieverInfo, senderInfo } = info;
+
+  // console.log("cancel con info: ", info);
+  const result = await users.updateOne(
+    { email: recieverInfo?.recieverEmail },
+    { $pull: { pendingReq: { senderEmail: senderInfo?.senderEmail } } }
+  );
+
+  if (result?.modifiedCount) {
+    const result1 = await users.updateOne(
+      { email: recieverInfo?.recieverEmail },
+      { $push: { allFriends: senderInfo } }
+    );
+    if (result1?.modifiedCount) {
+      const result2 = await users.updateOne(
+        { email: senderInfo?.senderEmail },
+        { $push: { allFriends: recieverInfo } }
+      );
+      return res.send(result2);
+    }
+  } else {
+    return res.send({
+      success: false,
+      error: "something went wrong.",
     });
   }
 });
