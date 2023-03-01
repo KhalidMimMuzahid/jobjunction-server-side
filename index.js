@@ -170,7 +170,7 @@ app.get('/like', async (req, res) => {
     const id = req.query.id
     // const email = req.headers.email
     const query = { _id: new ObjectId(id) }
-    const data = await timeLinePostsCollection.find(query).toArray()
+    const data = await timeLinePostsCollection.findOne(query)
     // const result = data[0].allLikes
     // console.log(result)
     // console.log(data)
@@ -226,10 +226,47 @@ app.get('/searchpeople', async (req, res) => {
     const id = req.query.id
     // const email = req.headers.email
     const query = { _id: new ObjectId(id) }
-    const data = await users.find(query).toArray()
+    const data = await users.findOne(query)
     res.send(data)
   } 
   catch (error) {
+    console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
+
+// all friends API 
+app.get('/allfriends', async (req, res) => {
+  try {
+    const id = req.query.id
+    // const email = req.headers.email
+    const query = { _id: new ObjectId(id) }
+    const data = await users.findOne(query)
+    
+    console.log(data.allFriends)
+    res.send(data)
+
+  } catch (error) {
+    console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
+
+// add connection API PUT
+app.put('/addconnection', async(req, res) => {
+  try {
+    const data = req.body
+
+    res.send(data)
+  } catch (error) {
     console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
