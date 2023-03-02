@@ -44,6 +44,8 @@ const usersAdditionalInfo = client
 const users = client.db("UsersInfo").collection("users");
 const timeLinePostsCollection = client.db("posts").collection("timeLinePosts");
 const jobPostsCollection = client.db("posts").collection("jobPosts");
+const chats = client.db("messaging").collection("chats");
+const messages = client.db("messaging").collection("chats");
 
 const run = async () => {
   try {
@@ -310,6 +312,8 @@ app.put("/caancelconnection", async (req, res) => {
 app.put("/acceptconnection", async (req, res) => {
   const infoString = req.headers.info;
   const info = JSON.parse(infoString);
+  console.log(info);
+  // return;
   const { recieverInfo, senderInfo } = info;
 
   // console.log("cancel con info: ", info);
@@ -330,9 +334,9 @@ app.put("/acceptconnection", async (req, res) => {
     );
     if (result1?.modifiedCount) {
       const friendInfo = {
-        friendName: recieverInfo?.senderName,
-        friendEmail: recieverInfo?.senderEmail,
-        friendPhoto: recieverInfo?.senderPhoto,
+        friendName: recieverInfo?.recieverName,
+        friendEmail: recieverInfo?.recieverEmail,
+        friendPhoto: recieverInfo?.recieverPhoto,
       };
       const result2 = await users.updateOne(
         { email: senderInfo?.senderEmail },
