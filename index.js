@@ -151,19 +151,11 @@ app.get("/getalljobs", async (req, res) => {
     const query = {};
     const option = await jobPostsCollection.find(query).toArray();
 
-    if (option.acknowledged) {
-      res.send({
-        success: true,
-        message: "Successfully got the data",
-        data: option,
-      });
-    } else {
-      // console.log(error.name.bgRed, error.message.bold);
-      res.send({
-        success: false,
-        error: error.message,
-      });
-    }
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: option,
+    })
   } catch (error) {
     // catch block
     // console.log(error.name.bgRed, error.message.bold);
@@ -259,6 +251,8 @@ app.get("/searchpeople", async (req, res) => {
     });
   }
 });
+
+// myprofile get api
 app.get("/myprofile", async (req, res) => {
   try {
     const uid = req.query.uid;
@@ -273,7 +267,7 @@ app.get("/myprofile", async (req, res) => {
       error: error.message,
     });
   }
-});
+})
 
 // add connection API PUT
 app.put("/addconnecion", async (req, res) => {
@@ -296,6 +290,8 @@ app.put("/addconnecion", async (req, res) => {
     });
   }
 });
+
+
 // cancel connection  put api
 app.put("/caancelconnection", async (req, res) => {
   const infoString = req.headers.info;
@@ -308,6 +304,9 @@ app.put("/caancelconnection", async (req, res) => {
   );
   res.send(result);
 });
+
+
+
 // when user cancel the network connectuion
 app.put("/acceptconnection", async (req, res) => {
   const infoString = req.headers.info;
@@ -351,3 +350,77 @@ app.put("/acceptconnection", async (req, res) => {
     });
   }
 });
+
+
+// like api put
+app.put('/likeapost', async (req, res) => {
+  try {
+    const infoString = req.headers.info;
+    const info = JSON.parse(infoString)
+    const { _id, email } = info
+    console.log("id", _id, "mail",email)
+
+  const result = await timeLinePostsCollection.updateOne(
+    {_id : new ObjectId(_id)},
+    { $push: { allLikes: email}}
+    )
+    console.log(result)
+
+    // const query = {}
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: result,
+    });
+
+
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
+// likes-of-a-post get api
+// app.get('/likes-of-a-post', async(req, res) => {
+//   try {
+//     const infoString = req.headers.info;
+//     const info = JSON.parse(infoString)
+//     const { _id, email } = info
+
+//   } catch (error) {
+    
+//   }
+// })
+
+
+// dislike a post put api
+app.put('/dislikeapost', async (req, res) => {
+  try {
+    const infoString = req.headers.info;
+    const info = JSON.parse(infoString)
+    const { _id, email } = info
+    console.log("id", _id, "mail", email)
+
+    const result = await timeLinePostsCollection.updateOne(
+      { _id: new ObjectId(_id) },
+      { $pull: { allLikes: email } }
+    )
+    console.log(result)
+
+    // const query = {}
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: result,
+    });
+
+
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
