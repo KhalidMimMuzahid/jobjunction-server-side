@@ -319,14 +319,24 @@ app.put("/acceptconnection", async (req, res) => {
   );
 
   if (result?.modifiedCount) {
+    const friendInfo = {
+      friendName: senderInfo?.senderName,
+      friendEmail: senderInfo?.senderEmail,
+      friendPhoto: senderInfo?.senderPhoto,
+    };
     const result1 = await users.updateOne(
       { email: recieverInfo?.recieverEmail },
-      { $push: { allFriends: senderInfo } }
+      { $push: { allFriends: friendInfo } }
     );
     if (result1?.modifiedCount) {
+      const friendInfo = {
+        friendName: recieverInfo?.senderName,
+        friendEmail: recieverInfo?.senderEmail,
+        friendPhoto: recieverInfo?.senderPhoto,
+      };
       const result2 = await users.updateOne(
         { email: senderInfo?.senderEmail },
-        { $push: { allFriends: recieverInfo } }
+        { $push: { allFriends: friendInfo } }
       );
       return res.send(result2);
     }
