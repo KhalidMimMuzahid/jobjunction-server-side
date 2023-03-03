@@ -17,6 +17,7 @@ const client = new MongoClient(uri);
 const server = app.listen(port, () => {
   console.log("listening on port", port);
 });
+
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
@@ -63,6 +64,7 @@ const run = async () => {
 run();
 
 //  all api create below:
+
 app.get("/", async (req, res) => {
   res.send({ message: "server is running" });
 });
@@ -164,6 +166,29 @@ app.get("/getalljobs", async (req, res) => {
   }
 });
 
+// all job post GET API
+app.get("/jobs/:id", async (req, res) => {
+  // try block
+  try {
+    const id = req.params.id
+    const query = {_id : new ObjectId(id)};
+    const option = await jobPostsCollection.findOne(query);
+    console.log(option)
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: option,
+    })
+  } catch (error) {
+    // catch block
+    // console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // user's data save POST API
 app.post("/insertusertodb", async (req, res) => {
   try {
@@ -217,7 +242,7 @@ app.get("/search", async (req, res) => {
       });
     } else {
       const result = await users.find(query).toArray();
-      console.log(result);
+      // console.log(result);
       res.send({
         success: true,
         message: "Successfully got the data",
