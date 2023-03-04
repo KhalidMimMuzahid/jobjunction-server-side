@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const moment = require("moment");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -26,17 +27,37 @@ const io = require("socket.io")(server, {
 });
 io.on("connection", (socket) => {
   console.log("connected to socket.io");
-  socket.on("setup", (userData) => {
-    // console.log("data: ", userData);
+  // socket.on("setup", (userData) => {
+  //   console.log("data setup: ", userData);
+  //   socket.join(userData?.email);
+  //   // console.log("try", userData?.email);
+  //   socket.emit("connected");
+  // });
+  // socket.on("join chat", (room) => {
+  //   socket.join(room);
+  //   console.log("user joined room: ", room);
+  // });
+  socket.on("join chat", (userData) => {
     socket.join(userData?.email);
-    // console.log("try", userData?.email);
-    socket.emit("connected");
+    console.log("user joined room: ", userData);
   });
-  socket.on("join chat", (room) => {
-    socket.join(room);
-    console.log("user joined room: ", room);
+  socket.on("new message", (messageDetailsInfo) => {
+    console.log("get message in socket io: ", messageDetailsInfo);
+    const { messageInfo, chatInfo } = messageDetailsInfo;
+    if (!chatInfo?.users) return console.log("chat.users not defined");
+    chatInfo?.users?.forEach((user) => {
+      if (user?.email == messageInfo?.senderEmail) {
+        return socket.in(user.email).emit("message sent");
+      }
+      socket.in(user.email).emit("message recieved", messageInfo);
+    });
+  });
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData?.email);
   });
 });
+
 //  socket io end here
 // collection
 const usersAdditionalInfo = client
@@ -173,15 +194,15 @@ app.get("/getalljobs", async (req, res) => {
 app.get("/jobs/:id", async (req, res) => {
   // try block
   try {
-    const id = req.params.id
-    const query = {_id : new ObjectId(id)};
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
     const option = await jobPostsCollection.findOne(query);
-    console.log(option)
+    console.log(option);
     res.send({
       success: true,
       message: "Successfully got the data",
       data: option,
-    })
+    });
   } catch (error) {
     // catch block
     // console.log(error.name.bgRed, error.message.bold);
@@ -207,12 +228,21 @@ app.post("/insertusertodb", async (req, res) => {
 });
 
 // update user details
-app.put('/updateprofile', async (req, res) => {
+app.put("/updateprofile", async (req, res) => {
   try {
-    const data = req.body
-    console.log("udatedata", data)
-    const { profilePhoto, title, phone, location, coverImgLink, name, email, city } = req.body
-    console.log("city", city)
+    const data = req.body;
+    console.log("udatedata", data);
+    const {
+      profilePhoto,
+      title,
+      phone,
+      location,
+      coverImgLink,
+      name,
+      email,
+      city,
+    } = req.body;
+    console.log("city", city);
     const filter = { email: email };
     const option = { upsert: true };
     const updateDoc = {
@@ -221,24 +251,21 @@ app.put('/updateprofile', async (req, res) => {
         title,
         phone,
         location,
-        coverImgLink, 
+        coverImgLink,
         name,
         email,
-        city: city
-
-    }
-  }
+        city: city,
+      },
+    };
     const result = await users.updateOne(filter, updateDoc, option);
-    console.log("result", result)
-
-
+    console.log("result", result);
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
     });
   }
-})
+});
 
 // liking api
 // app.get('/like', async (req, res) => {
@@ -433,6 +460,8 @@ app.put("/acceptconnection", async (req, res) => {
         return res.send(result2);
       } else {
         // return;
+        const lastUpdatedAt = moment().format();
+
         const chat = {
           chatName: "",
           isGroupChat: false,
@@ -443,6 +472,7 @@ app.put("/acceptconnection", async (req, res) => {
           ],
           latestMessage: "you are Connected",
           groupAdmin: { email: "" },
+          lastUpdatedAt: lastUpdatedAt,
         };
         // console.log(chat);
         const chatInsertResult = await chats.insertOne(chat);
@@ -552,18 +582,22 @@ app.put("/dislikeapost", async (req, res) => {
       error: error.message,
     });
   }
-
 });
 app.get("/messagelists", async (req, res) => {
   const myEmail = req?.query?.myEmail;
-  console.log(myEmail);
+  console.log("ny email", myEmail);
+
+  const options = {
+    sort: { lastUpdatedAt: -1 },
+  };
+
   const query = {
     users: {
       $all: [{ email: myEmail }],
     },
   };
 
-  const chatLists = await chats.find(query).toArray();
+  const chatLists = await chats.find(query, options).toArray();
   // console.log(chatLists);
   res.send(chatLists);
 });
@@ -605,9 +639,11 @@ app.post("/sendMessage", async (req, res) => {
     // this option instructs the method to create a document if no documents match the filter
     const options = { upsert: false };
     // create a document that sets the plot of the movie
+    const lastUpdatedAt = moment().format();
     const updateDoc = {
       $set: {
         latestMessage: textMessage,
+        lastUpdatedAt: lastUpdatedAt,
       },
     };
     const result2 = await chats.updateOne(filter, updateDoc, options);
