@@ -227,7 +227,6 @@ app.post("/insertusertodb", async (req, res) => {
   }
 });
 
-
 // update user details
 app.put("/updateprofile", async (req, res) => {
   try {
@@ -253,34 +252,30 @@ app.put("/updateprofile", async (req, res) => {
         title,
         phone,
         location,
-        coverImgLink, 
+        coverImgLink,
         name,
         email,
-        city: city
-
-    }
-  }
+        city: city,
+      },
+    };
     const result = await users.updateOne(filter, updateDoc, option);
-   if(result){
-    res.send({
-      success: true,
-      data: result
-    })
-   }else{
-    res.send({
-      success: false,
-      message: 'could not found data'
-    })
-   }
-
+    if (result) {
+      res.send({
+        success: true,
+        data: result,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "could not found data",
+      });
+    }
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
     });
   }
-})
-
 });
 
 // liking api
@@ -559,7 +554,6 @@ app.put("/likeapost", async (req, res) => {
     });
   }
 });
-
 
 // likes-of-a-post get api
 // app.get('/likes-of-a-post', async(req, res) => {
