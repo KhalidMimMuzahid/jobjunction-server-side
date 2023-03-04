@@ -180,6 +180,40 @@ app.post("/insertusertodb", async (req, res) => {
   }
 });
 
+// update user details
+app.put('/updateprofile', async (req, res) => {
+  try {
+    const data = req.body
+    console.log("udatedata", data)
+    const { profilePhoto, title, phone, location, coverImgLink, name, email, city } = req.body
+    console.log("city", city)
+    const filter = { email: email };
+    const option = { upsert: true };
+    const updateDoc = {
+      $set: {
+        profilePhoto,
+        title,
+        phone,
+        location,
+        coverImgLink, 
+        name,
+        email,
+        city: city
+
+    }
+  }
+    const result = await users.updateOne(filter, updateDoc, option);
+    console.log("result", result)
+
+
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
 // liking api
 // app.get('/like', async (req, res) => {
 //   try {
