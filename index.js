@@ -663,3 +663,35 @@ app.post("/sendMessage", async (req, res) => {
   }
   res.send({ sdfs: "fgfd" });
 });
+
+
+
+// apply a job PUT API
+app.put('/applyajob', async (req, res) => {
+  try {
+    const infoNeedParse = req.headers.info
+    const info = JSON.parse(infoNeedParse)
+    const { _id, email } = info
+
+    // console.log(_id, email)
+    // console.log(info)
+
+    const query = { _id: new ObjectId(_id) }
+    const option = await jobPostsCollection.updateOne(
+      query,
+      { $push: { totalApplyed: email } })
+
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: option,
+    });
+
+
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
