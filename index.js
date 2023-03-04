@@ -180,6 +180,54 @@ app.post("/insertusertodb", async (req, res) => {
   }
 });
 
+
+// update user details
+app.put('/updateprofile', async (req, res) => {
+  try {
+    const data = req.body
+    console.log("udatedata", data)
+    const { profilePhoto, title, phone, location, coverImgLink, name, email, city } = req.body
+    console.log("city", city)
+    const filter = { email: email };
+    const option = { upsert: false };
+    const updateDoc = {
+      $set: {
+        profilePhoto,
+        title,
+        phone,
+        location,
+        coverImgLink, 
+        name,
+        email,
+        city: city
+
+    }
+  }
+    const result = await users.updateOne(filter, updateDoc, option);
+   if(result){
+    res.send({
+      success: true,
+      data: result
+    })
+   }else{
+    res.send({
+      success: false,
+      message: 'could not found data'
+    })
+   }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+})
+
+
+
+
+
+
 // liking api
 // app.get('/like', async (req, res) => {
 //   try {
@@ -306,7 +354,6 @@ app.put("/caancelconnection", async (req, res) => {
 });
 
 
-
 // when user cancel the network connectuion
 app.put("/acceptconnection", async (req, res) => {
   const infoString = req.headers.info;
@@ -381,6 +428,7 @@ app.put('/likeapost', async (req, res) => {
     });
   }
 })
+
 
 // likes-of-a-post get api
 // app.get('/likes-of-a-post', async(req, res) => {
