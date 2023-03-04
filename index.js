@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const moment = require("moment");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -17,6 +18,7 @@ const client = new MongoClient(uri);
 const server = app.listen(port, () => {
   console.log("listening on port", port);
 });
+
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
@@ -25,17 +27,37 @@ const io = require("socket.io")(server, {
 });
 io.on("connection", (socket) => {
   console.log("connected to socket.io");
-  socket.on("setup", (userData) => {
-    // console.log("data: ", userData);
+  // socket.on("setup", (userData) => {
+  //   console.log("data setup: ", userData);
+  //   socket.join(userData?.email);
+  //   // console.log("try", userData?.email);
+  //   socket.emit("connected");
+  // });
+  // socket.on("join chat", (room) => {
+  //   socket.join(room);
+  //   console.log("user joined room: ", room);
+  // });
+  socket.on("join chat", (userData) => {
     socket.join(userData?.email);
-    // console.log("try", userData?.email);
-    socket.emit("connected");
+    console.log("user joined room: ", userData);
   });
-  socket.on("join chat", (room) => {
-    socket.join(room);
-    console.log("user joined room: ", room);
+  socket.on("new message", (messageDetailsInfo) => {
+    console.log("get message in socket io: ", messageDetailsInfo);
+    const { messageInfo, chatInfo } = messageDetailsInfo;
+    if (!chatInfo?.users) return console.log("chat.users not defined");
+    chatInfo?.users?.forEach((user) => {
+      if (user?.email == messageInfo?.senderEmail) {
+        return socket.in(user.email).emit("message sent");
+      }
+      socket.in(user.email).emit("message recieved", messageInfo);
+    });
+  });
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData?.email);
   });
 });
+
 //  socket io end here
 // collection
 const usersAdditionalInfo = client
@@ -45,7 +67,7 @@ const users = client.db("UsersInfo").collection("users");
 const timeLinePostsCollection = client.db("posts").collection("timeLinePosts");
 const jobPostsCollection = client.db("posts").collection("jobPosts");
 const chats = client.db("messaging").collection("chats");
-const messages = client.db("messaging").collection("chats");
+const messages = client.db("messaging").collection("messages");
 
 const run = async () => {
   try {
@@ -65,6 +87,7 @@ const run = async () => {
 run();
 
 //  all api create below:
+
 app.get("/", async (req, res) => {
   res.send({ message: "server is running" });
 });
@@ -121,8 +144,9 @@ app.get("/allposts", async (req, res) => {
 app.post("/postajob", async (req, res) => {
   try {
     const postData = req.body;
-    // console.log(body)
+    console.log(postData);
     const result = await jobPostsCollection.insertOne(postData);
+    console.log(result);
     if (result.acknowledged) {
       res.send({
         success: true,
@@ -155,7 +179,30 @@ app.get("/getalljobs", async (req, res) => {
       success: true,
       message: "Successfully got the data",
       data: option,
-    })
+    });
+  } catch (error) {
+    // catch block
+    // console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// all job post GET API
+app.get("/jobs/:id", async (req, res) => {
+  // try block
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const option = await jobPostsCollection.findOne(query);
+    console.log(option);
+    res.send({
+      success: true,
+      message: "Successfully got the data",
+      data: option,
+    });
   } catch (error) {
     // catch block
     // console.log(error.name.bgRed, error.message.bold);
@@ -182,14 +229,24 @@ app.post("/insertusertodb", async (req, res) => {
 
 
 // update user details
-app.put('/updateprofile', async (req, res) => {
+app.put("/updateprofile", async (req, res) => {
   try {
-    const data = req.body
-    console.log("udatedata", data)
-    const { profilePhoto, title, phone, location, coverImgLink, name, email, city } = req.body
-    console.log("city", city)
+    const data = req.body;
+    console.log("udatedata", data);
+    const {
+      profilePhoto,
+      title,
+      phone,
+      location,
+      coverImgLink,
+      name,
+      email,
+      city,
+    } = req.body;
+    console.log("city", city);
     const filter = { email: email };
-    const option = { upsert: false };
+    const option = { upsert: true };
+
     const updateDoc = {
       $set: {
         profilePhoto,
@@ -215,6 +272,7 @@ app.put('/updateprofile', async (req, res) => {
       message: 'could not found data'
     })
    }
+
   } catch (error) {
     res.send({
       success: false,
@@ -223,10 +281,7 @@ app.put('/updateprofile', async (req, res) => {
   }
 })
 
-
-
-
-
+});
 
 // liking api
 // app.get('/like', async (req, res) => {
@@ -255,7 +310,7 @@ app.get("/search", async (req, res) => {
     const info = req.headers.data;
     const query = {};
     const parsedInfo = JSON.parse(info);
-    console.log(parsedInfo);
+    // console.log(parsedInfo);
 
     if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
@@ -267,7 +322,7 @@ app.get("/search", async (req, res) => {
       });
     } else {
       const result = await users.find(query).toArray();
-      console.log(result);
+      // console.log(result);
       res.send({
         success: true,
         message: "Successfully got the data",
@@ -307,6 +362,7 @@ app.get("/myprofile", async (req, res) => {
     // const email = req.headers.email
     const query = { uid };
     const data = await users.findOne(query);
+    // console.log("xxxxxxxxx", data);
     res.send(data);
   } catch (error) {
     // console.log(error.name.bgRed, error.message.bold);
@@ -315,7 +371,23 @@ app.get("/myprofile", async (req, res) => {
       error: error.message,
     });
   }
-})
+});
+app.get("/userProfile", async (req, res) => {
+  try {
+    const email = req.query.email;
+    // const email = req.headers.email
+    const query = { email };
+    const data = await users.findOne(query);
+    // console.log("xxxxxxxxx", data);
+    res.send(data);
+  } catch (error) {
+    // console.log(error.name.bgRed, error.message.bold);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 // add connection API PUT
 app.put("/addconnecion", async (req, res) => {
@@ -339,7 +411,6 @@ app.put("/addconnecion", async (req, res) => {
   }
 });
 
-
 // cancel connection  put api
 app.put("/caancelconnection", async (req, res) => {
   const infoString = req.headers.info;
@@ -353,15 +424,15 @@ app.put("/caancelconnection", async (req, res) => {
   res.send(result);
 });
 
-
 // when user cancel the network connectuion
 app.put("/acceptconnection", async (req, res) => {
   const infoString = req.headers.info;
   const info = JSON.parse(infoString);
-  console.log(info);
-  // return;
+  // console.log(info);
   const { recieverInfo, senderInfo } = info;
+  // console.log("recieverInfo: ", recieverInfo, "\nsenderInfo: ", senderInfo);
 
+  // return;
   // console.log("cancel con info: ", info);
   const result = await users.updateOne(
     { email: recieverInfo?.recieverEmail },
@@ -388,7 +459,70 @@ app.put("/acceptconnection", async (req, res) => {
         { email: senderInfo?.senderEmail },
         { $push: { allFriends: friendInfo } }
       );
-      return res.send(result2);
+
+      const query = {
+        isGroupChat: false,
+        users: {
+          $all: [
+            { email: recieverInfo?.recieverEmail },
+            { email: senderInfo?.senderEmail },
+          ],
+        },
+      };
+
+      const chatAlreadyExists = await chats.findOne(query);
+
+      if (chatAlreadyExists) {
+        return res.send(result2);
+      } else {
+        // return;
+        const lastUpdatedAt = moment().format();
+
+        const chat = {
+          chatName: "",
+          isGroupChat: false,
+          chatProfilePhoto: "",
+          users: [
+            { email: recieverInfo?.recieverEmail },
+            { email: senderInfo?.senderEmail },
+          ],
+          latestMessage: "you are Connected",
+          groupAdmin: { email: "" },
+          lastUpdatedAt: lastUpdatedAt,
+        };
+        // console.log(chat);
+        const chatInsertResult = await chats.insertOne(chat);
+        const chatObjectId = chatInsertResult?.insertedId?.toHexString();
+        // console.log("xxsakcsdjcsdjcdjcsdjcjsd=>:::", chatInsertResult);
+        // console.log("xxxxxxx:=>", chatInsertResult?.insertedId?.toHexString());
+
+        if (chatObjectId) {
+          const docs = [
+            {
+              chatId: chatObjectId,
+              sender: { email: senderInfo?.senderEmail },
+              message: `you have connected ${recieverInfo?.recieverName}`,
+              readBy: [{ email: "" }],
+            },
+
+            {
+              chatId: chatObjectId,
+              sender: { email: recieverInfo?.recieverEmail },
+              message: `you have connected ${senderInfo?.senderName}`,
+              readBy: [{ email: "" }],
+            },
+          ];
+          const result = await messages.insertMany(docs);
+          return res.send(result);
+        } else {
+          return res.send(result2);
+        }
+      }
+    } else {
+      return res.send({
+        success: false,
+        error: "something went wrong.",
+      });
     }
   } else {
     return res.send({
@@ -398,20 +532,19 @@ app.put("/acceptconnection", async (req, res) => {
   }
 });
 
-
 // like api put
-app.put('/likeapost', async (req, res) => {
+app.put("/likeapost", async (req, res) => {
   try {
     const infoString = req.headers.info;
-    const info = JSON.parse(infoString)
-    const { _id, email } = info
-    console.log("id", _id, "mail",email)
+    const info = JSON.parse(infoString);
+    const { _id, email } = info;
+    console.log("id", _id, "mail", email);
 
-  const result = await timeLinePostsCollection.updateOne(
-    {_id : new ObjectId(_id)},
-    { $push: { allLikes: email}}
-    )
-    console.log(result)
+    const result = await timeLinePostsCollection.updateOne(
+      { _id: new ObjectId(_id) },
+      { $push: { allLikes: email } }
+    );
+    console.log(result);
 
     // const query = {}
     res.send({
@@ -419,15 +552,13 @@ app.put('/likeapost', async (req, res) => {
       message: "Successfully got the data",
       data: result,
     });
-
-
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
     });
   }
-})
+});
 
 
 // likes-of-a-post get api
@@ -438,24 +569,23 @@ app.put('/likeapost', async (req, res) => {
 //     const { _id, email } = info
 
 //   } catch (error) {
-    
+
 //   }
 // })
 
-
 // dislike a post put api
-app.put('/dislikeapost', async (req, res) => {
+app.put("/dislikeapost", async (req, res) => {
   try {
     const infoString = req.headers.info;
-    const info = JSON.parse(infoString)
-    const { _id, email } = info
-    console.log("id", _id, "mail", email)
+    const info = JSON.parse(infoString);
+    const { _id, email } = info;
+    console.log("id", _id, "mail", email);
 
     const result = await timeLinePostsCollection.updateOne(
       { _id: new ObjectId(_id) },
       { $pull: { allLikes: email } }
-    )
-    console.log(result)
+    );
+    console.log(result);
 
     // const query = {}
     res.send({
@@ -463,12 +593,79 @@ app.put('/dislikeapost', async (req, res) => {
       message: "Successfully got the data",
       data: result,
     });
-
-
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
     });
   }
-})
+});
+app.get("/messagelists", async (req, res) => {
+  const myEmail = req?.query?.myEmail;
+  console.log("ny email", myEmail);
+
+  const options = {
+    sort: { lastUpdatedAt: -1 },
+  };
+
+  const query = {
+    users: {
+      $all: [{ email: myEmail }],
+    },
+  };
+
+  const chatLists = await chats.find(query, options).toArray();
+  // console.log(chatLists);
+  res.send(chatLists);
+});
+app.get("/search-messages", async (req, res) => {
+  console.log("hitted");
+  const chatId = req.query.chatId;
+
+  const query = { chatId };
+
+  const allMessages = await messages.find(query).toArray();
+  // console.log(allMessages);
+  res.send(allMessages);
+});
+app.get("/chatInfo", async (req, res) => {
+  // console.log("hitted");
+  const chatId = req.query.chatId;
+
+  const query = { _id: new ObjectId(chatId) };
+
+  const chat = await chats.findOne(query);
+  // console.log("chats: xxxxxxxx=> ", chat);
+  res.send(chat);
+});
+app.post("/sendMessage", async (req, res) => {
+  const messageInfo = req.body;
+  const { chatId, message: textMessage, senderEmail } = messageInfo;
+  console.log(messageInfo);
+
+  const message = {
+    chatId: chatId,
+    sender: { email: senderEmail },
+    message: textMessage,
+    readBy: [{ email: "" }],
+  };
+  const result = await messages.insertOne(message);
+  console.log("result: ", result);
+  if (result.acknowledged) {
+    const filter = { _id: new ObjectId(chatId) };
+    // this option instructs the method to create a document if no documents match the filter
+    const options = { upsert: false };
+    // create a document that sets the plot of the movie
+    const lastUpdatedAt = moment().format();
+    const updateDoc = {
+      $set: {
+        latestMessage: textMessage,
+        lastUpdatedAt: lastUpdatedAt,
+      },
+    };
+    const result2 = await chats.updateOne(filter, updateDoc, options);
+    return res.send(result2);
+  } else {
+  }
+  res.send({ sdfs: "fgfd" });
+});
