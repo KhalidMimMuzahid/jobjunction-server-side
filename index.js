@@ -19,44 +19,44 @@ const server = app.listen(port, () => {
   console.log("listening on port", port);
 });
 
-const io = require("socket.io")(server, {
-  pingTimeout: 60000,
-  cors: {
-    origin: "https://job-junction-pro.web.app",
-  },
-});
-io.on("connection", (socket) => {
-  console.log("connected to socket.io");
-  // socket.on("setup", (userData) => {
-  //   console.log("data setup: ", userData);
-  //   socket.join(userData?.email);
-  //   // console.log("try", userData?.email);
-  //   socket.emit("connected");
-  // });
-  // socket.on("join chat", (room) => {
-  //   socket.join(room);
-  //   console.log("user joined room: ", room);
-  // });
-  socket.on("join chat", (userData) => {
-    socket.join(userData?.email);
-    console.log("user joined room: ", userData);
-  });
-  socket.on("new message", (messageDetailsInfo) => {
-    console.log("get message in socket io: ", messageDetailsInfo);
-    const { messageInfo, chatInfo } = messageDetailsInfo;
-    if (!chatInfo?.users) return console.log("chat.users not defined");
-    chatInfo?.users?.forEach((user) => {
-      if (user?.email == messageInfo?.senderEmail) {
-        return socket.in(user.email).emit("message sent");
-      }
-      socket.in(user.email).emit("message recieved", messageInfo);
-    });
-  });
-  socket.off("setup", () => {
-    console.log("USER DISCONNECTED");
-    socket.leave(userData?.email);
-  });
-});
+// const io = require("socket.io")(server, {
+//   pingTimeout: 60000,
+//   cors: {
+//     origin: "https://job-junction-pro.web.app",
+//   },
+// });
+// io.on("connection", (socket) => {
+//   console.log("connected to socket.io");
+//   // socket.on("setup", (userData) => {
+//   //   console.log("data setup: ", userData);
+//   //   socket.join(userData?.email);
+//   //   // console.log("try", userData?.email);
+//   //   socket.emit("connected");
+//   // });
+//   // socket.on("join chat", (room) => {
+//   //   socket.join(room);
+//   //   console.log("user joined room: ", room);
+//   // });
+//   socket.on("join chat", (userData) => {
+//     socket.join(userData?.email);
+//     console.log("user joined room: ", userData);
+//   });
+//   socket.on("new message", (messageDetailsInfo) => {
+//     console.log("get message in socket io: ", messageDetailsInfo);
+//     const { messageInfo, chatInfo } = messageDetailsInfo;
+//     if (!chatInfo?.users) return console.log("chat.users not defined");
+//     chatInfo?.users?.forEach((user) => {
+//       if (user?.email == messageInfo?.senderEmail) {
+//         return socket.in(user.email).emit("message sent");
+//       }
+//       socket.in(user.email).emit("message recieved", messageInfo);
+//     });
+//   });
+//   socket.off("setup", () => {
+//     console.log("USER DISCONNECTED");
+//     socket.leave(userData?.email);
+//   });
+// });
 
 //  socket io end here
 // collection
