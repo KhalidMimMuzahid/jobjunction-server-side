@@ -727,12 +727,12 @@ app.put("/applyajob", async (req, res) => {
     const info = JSON.parse(infoNeedParse);
     const { _id, email } = info;
 
-    // console.log(_id, email)
+    // console.log(_id )
     // console.log(info)
 
     const query = { _id: new ObjectId(_id) };
     const option = await jobPostsCollection.updateOne(query, {
-      $push: { totalApplyed: email },
+      $push: { totalApplyed: info },
     });
 
     res.send({
