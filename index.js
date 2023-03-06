@@ -305,7 +305,7 @@ app.get("/search", async (req, res) => {
     const info = req.headers.data;
     const query = {};
     const parsedInfo = JSON.parse(info);
-    // console.log(parsedInfo);
+    console.log(parsedInfo);
 
     if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
