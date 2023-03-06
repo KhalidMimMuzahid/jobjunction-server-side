@@ -556,43 +556,41 @@ app.put("/likeapost", async (req, res) => {
 });
 
 // comment API put
-app.put('/comment', async (req, res) => {
+app.put("/comment", async (req, res) => {
   try {
-    const infoString = req.headers.info
-    const commentInfo = JSON.parse(infoString)
+    const infoString = req.headers.info;
+    const commentInfo = JSON.parse(infoString);
 
-    const { id } = commentInfo
+    const { id } = commentInfo;
     // console.log(commentInfo)
 
-    const query = { _id: new ObjectId(id) }
-    const result = await timeLinePostsCollection.updateOne(
-      query, { $push: { allComments: commentInfo } }
-    )
+    const query = { _id: new ObjectId(id) };
+    const result = await timeLinePostsCollection.updateOne(query, {
+      $push: { allComments: commentInfo },
+    });
 
     res.send({
       success: true,
       message: "Successfully got the data",
       data: result,
     });
-
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
-    })
+    });
   }
-})
-
+});
 
 // comment API get
-app.get('/comments', async (req, res) => {
+app.get("/comments", async (req, res) => {
   try {
-    const id = req.query.id
+    const id = req.query.id;
     // console.log(id)
 
-    const query = {_id : new ObjectId(id)}
+    const query = { _id: new ObjectId(id) };
 
-    const result = await timeLinePostsCollection.findOne(query)
+    const result = await timeLinePostsCollection.findOne(query);
 
     // console.log(result.allComments)
 
@@ -601,15 +599,13 @@ app.get('/comments', async (req, res) => {
       message: "Successfully got the data",
       data: result.allComments,
     });
-
   } catch (error) {
     res.send({
       success: false,
       error: error.message,
-    })
+    });
   }
-})
-
+});
 
 // likes-of-a-post get api
 // app.get('/likes-of-a-post', async(req, res) => {
@@ -741,6 +737,23 @@ app.put("/applyajob", async (req, res) => {
       data: option,
     });
   } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+// myprofile get api
+app.get("/haveIJobPost", async (req, res) => {
+  try {
+    const userEmail = req?.query?.userEmail;
+    // const email = req.headers.email
+    const query = { userEmail };
+    const data = await jobPostsCollection.find(query).toArray();
+    // console.log("xxxxxxxxx", data);
+    res.send(data);
+  } catch (error) {
+    // console.log(error.name.bgRed, error.message.bold);
     res.send({
       success: false,
       error: error.message,
