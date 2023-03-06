@@ -743,14 +743,15 @@ app.put("/applyajob", async (req, res) => {
     });
   }
 });
+
 // myprofile get api
 app.get("/haveIJobPost", async (req, res) => {
   try {
     const userEmail = req?.query?.userEmail;
+    // console.log("xxxxxxxxx", data);
     // const email = req.headers.email
     const query = { userEmail };
     const data = await jobPostsCollection.find(query).toArray();
-    // console.log("xxxxxxxxx", data);
     res.send(data);
   } catch (error) {
     // console.log(error.name.bgRed, error.message.bold);
