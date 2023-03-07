@@ -226,7 +226,18 @@ app.post("/insertusertodb", async (req, res) => {
     };
   }
 });
-
+app.get("/checkuseralreadyindatabase", async (req, res) => {
+  const uid = req?.query?.uid;
+  // console.log("uid : ", uid);
+  const query = { uid: uid };
+  const result = await users.findOne(query);
+  //   console.log(result);
+  if (result) {
+    res.send({ isUserAlreadyExists: true });
+  } else {
+    res.send({ isUserAlreadyExists: false });
+  }
+});
 // update user details
 app.put("/updateprofile", async (req, res) => {
   try {
@@ -305,7 +316,7 @@ app.get("/search", async (req, res) => {
     const info = req.headers.data;
     const query = {};
     const parsedInfo = JSON.parse(info);
-    // console.log(parsedInfo);
+    console.log(parsedInfo);
 
     if (parsedInfo.searchType == "Jobs") {
       const result = await jobPostsCollection.find(query).toArray();
